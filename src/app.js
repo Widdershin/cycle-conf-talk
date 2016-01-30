@@ -1,13 +1,14 @@
 import {div, pre} from '@cycle/dom';
 import {Observable} from 'rx';
 import _ from 'lodash';
+import collide from 'box-collide';
 
-function mario ({x, y, size}) {
+function mario ({x, y, width, height}) {
   return (
     div('.mario', {
       style: {
-        width: size + 'px',
-        height: size + 'px',
+        width: width + 'px',
+        height: height + 'px',
         background: 'orange',
         position: 'absolute',
         left: x + 'px',
@@ -67,6 +68,12 @@ function update (delta, dPressed, aPressed) {
 
     const mario = state.gameObjects[0];
 
+    console.log(collide(mario, state.gameObjects[1]));
+
+    if (!collide(mario, state.gameObjects[1])) {
+      mario.y += state.gravity * delta;
+    }
+
     mario.x += mario.hSpeed * moveDirection * delta;
 
     Object.assign(state, {
@@ -85,7 +92,8 @@ export default function App ({DOM, Animation, Keys}) {
         name: 'mario',
         x: 300,
         y: 50,
-        size: 20,
+        width: 20,
+        height: 20,
         hSpeed: 0.15,
         view: mario
       },
@@ -98,7 +106,9 @@ export default function App ({DOM, Animation, Keys}) {
         height: 60,
         view: ground
       }
-    ]
+    ],
+
+    gravity: 0.08
   };
 
   const keys = {

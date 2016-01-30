@@ -5,3 +5,7 @@ pre {
 html, body {
   background: skyblue;
 }
+
+.mario {
+  border: 1px solid #555;
+}
