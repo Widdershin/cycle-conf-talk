@@ -33,6 +33,21 @@ function ground ({x, y, width, height}) {
   );
 }
 
+function platform ({x, y, width, height}) {
+  return (
+    div('.ground', {
+      style: {
+        width: width + 'px',
+        height: height + 'px',
+        background: 'grey',
+        position: 'absolute',
+        left: x + 'px',
+        top: y + 'px'
+      }
+    })
+  );
+}
+
 function defaultView(obj) {
   return (
     pre('.game-object', {
@@ -68,7 +83,22 @@ function update (delta, dPressed, aPressed, spacePressed) {
 
     const mario = state.gameObjects[0];
 
-    mario.onGround = collide(mario, state.gameObjects[1]);
+    const otherGameObjects = state.gameObjects.slice(1);
+
+    mario.onGround = otherGameObjects.some(obj => collide(mario, obj));
+
+    const platform = state.gameObjects.filter(obj => obj.name === 'platform')[0];
+
+    platform.y -= platform.hAccel * platform.direction * delta;
+
+
+    if (platform.y < 300) {
+      platform.direction = -1;
+    }
+
+    if (platform.y > 450) {
+      platform.direction = 1;
+    }
 
     if (!mario.onGround) {
       mario.vSpeed += state.gravity * delta;
@@ -78,6 +108,10 @@ function update (delta, dPressed, aPressed, spacePressed) {
 
     if (mario.onGround && spacePressed) {
       mario.vSpeed -= 4;
+    }
+
+    if (collide(mario, platform)) {
+      mario.y = platform.y - mario.height
     }
 
     mario.hSpeed += mario.hAcceleration * moveDirection * delta;
@@ -102,7 +136,7 @@ export default function App ({DOM, Animation, Keys}) {
       {
         name: 'mario',
         x: 300,
-        y: 50,
+        y: 300,
         width: 20,
         height: 20,
         hAcceleration: 0.015,
@@ -118,7 +152,37 @@ export default function App ({DOM, Animation, Keys}) {
         width: 800,
         height: 60,
         view: ground
-      }
+      },
+
+      {
+        name: 'ground',
+        x: 600,
+        y: 470,
+        width: 30,
+        height: 30,
+        view: ground
+      },
+
+      {
+        name: 'platform',
+        x: 500,
+        y: 450,
+        width: 50,
+        height: 20,
+        view: platform,
+        hAccel: 0.03,
+        direction: 1
+      },
+
+      {
+        name: 'ground',
+        x: 600,
+        y: 270,
+        width: 200,
+        height: 30,
+        view: ground
+      },
+
     ],
 
     gravity: 0.008
