@@ -8,7 +8,7 @@ var app = require('./src/app').default;
 
 const drivers = {
   DOM: restartable(makeDOMDriver('.app'), {pauseSinksWhileReplaying: false}),
-  Animation: makeAnimationDriver()
+  Animation: restartable(makeAnimationDriver())
 };
 
 const {sinks, sources} = run(app, drivers);

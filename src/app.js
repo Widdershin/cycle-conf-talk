@@ -25,14 +25,27 @@ function view (state) {
   );
 }
 
+function update (delta) {
+  return (state) => {
+    state.mario.x += state.mario.hSpeed * delta;
+    return state;
+  };
+}
+
 export default function App ({DOM, Animation}) {
-  const state$ = Observable.just({
+  const initialState = {
     mario: {
       x: 50,
       y: 50,
-      size: 20
+      size: 20,
+      hSpeed: 0.15
     }
-  });
+  };
+
+  const update$ = Animation.map(({delta}) => update(delta));
+
+  const state$ = update$.startWith(initialState)
+    .scan((state, action) => action(state));
 
   return {
     DOM: state$.map(view)
