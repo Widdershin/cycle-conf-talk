@@ -54,7 +54,7 @@ function view (state) {
   );
 }
 
-function update (delta, dPressed, aPressed) {
+function update (delta, dPressed, aPressed, spacePressed) {
   return (state) => {
     let moveDirection = 0;
 
@@ -68,17 +68,28 @@ function update (delta, dPressed, aPressed) {
 
     const mario = state.gameObjects[0];
 
-    console.log(collide(mario, state.gameObjects[1]));
+    mario.onGround = collide(mario, state.gameObjects[1]);
 
-    if (!collide(mario, state.gameObjects[1])) {
-      mario.y += state.gravity * delta;
+    if (!mario.onGround) {
+      mario.vSpeed += state.gravity * delta;
+    } else {
+      mario.vSpeed = 0;
     }
 
-    mario.x += mario.hSpeed * moveDirection * delta;
+    if (mario.onGround && spacePressed) {
+      mario.vSpeed -= 4;
+    }
+
+    mario.hSpeed += mario.hAcceleration * moveDirection * delta;
+    mario.x += mario.hSpeed;
+    mario.y += mario.vSpeed;
+
+    mario.hSpeed *= 0.94;
 
     Object.assign(state, {
       dPressed,
-      aPressed
+      aPressed,
+      spacePressed
     });
 
     return state;
@@ -94,7 +105,9 @@ export default function App ({DOM, Animation, Keys}) {
         y: 50,
         width: 20,
         height: 20,
-        hSpeed: 0.15,
+        hAcceleration: 0.015,
+        hSpeed: 0,
+        vSpeed: 0,
         view: mario
       },
 
@@ -108,15 +121,16 @@ export default function App ({DOM, Animation, Keys}) {
       }
     ],
 
-    gravity: 0.08
+    gravity: 0.008
   };
 
   const keys = {
     d$: Keys.isDown(68),
-    a$: Keys.isDown(65)
-  }
+    a$: Keys.isDown(65),
+    space$: Keys.isDown(32)
+  };
 
-  const update$ = Animation.withLatestFrom(keys.d$, keys.a$, ({delta}, dPressed, aPressed) => update(delta, dPressed, aPressed));
+  const update$ = Animation.withLatestFrom(keys.d$, keys.a$, keys.space$, ({delta}, dPressed, aPressed, spacePressed) => update(delta, dPressed, aPressed, spacePressed));
 
   const state$ = update$.startWith(initialState)
     .scan((state, action) => action(state));
