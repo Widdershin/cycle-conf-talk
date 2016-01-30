@@ -1,0 +1,45 @@
+{
+  "name": "cycle-conf-talk",
+  "version": "0.0.1",
+  "description": "My talk for CycleConf 2016",
+  "main": "index.js",
+  "dependencies": {
+    "@cycle/isolate": "^1.2.0",
+    "cycle-animation-driver": "^0.1.2",
+    "rx": "^4.0.7"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.4.5",
+    "babel-core": "^6.4.5",
+    "babel-preset-es2015": "^6.3.13",
+    "babelify": "^7.2.0",
+    "browserify": "^13.0.0",
+    "browserify-hmr": "^0.3.1",
+    "budo": "^8.0.2",
+    "cycle-restart": "0.0.6",
+    "garnish": "^5.0.1",
+    "mocha": "^2.4.5"
+  },
+  "scripts": {
+    "test": "mocha",
+    "start": "babel-node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Widdershin/cycle-conf-talk.git"
+  },
+  "keywords": [
+    "cyclejs",
+    "hot",
+    "reloading",
+    "time",
+    "travel",
+    "happiness"
+  ],
+  "author": "Nick Johnstone",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Widdershin/cycle-conf-talk/issues"
+  },
+  "homepage": "https://github.com/Widdershin/cycle-conf-talk"
+}
