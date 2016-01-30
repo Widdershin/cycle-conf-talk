@@ -6,6 +6,7 @@
   "dependencies": {
     "@cycle/isolate": "^1.2.0",
     "cycle-animation-driver": "^0.1.2",
+    "lodash": "^4.1.0",
     "rx": "^4.0.7"
   },
   "devDependencies": {
