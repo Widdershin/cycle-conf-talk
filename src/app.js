@@ -25,14 +25,30 @@ function view (state) {
   );
 }
 
-function update (delta) {
+function update (delta, dPressed, aPressed) {
   return (state) => {
-    state.mario.x += state.mario.hSpeed * delta;
+    let moveDirection = 0;
+
+    if (dPressed) {
+      moveDirection += 1;
+    }
+
+    if (aPressed) {
+      moveDirection -= 1;
+    }
+
+    state.mario.x += state.mario.hSpeed * moveDirection * delta;
+
+    Object.assign(state, {
+      dPressed,
+      aPressed
+    });
+
     return state;
   };
 }
 
-export default function App ({DOM, Animation}) {
+export default function App ({DOM, Animation, Keys}) {
   const initialState = {
     mario: {
       x: 50,
@@ -42,7 +58,12 @@ export default function App ({DOM, Animation}) {
     }
   };
 
-  const update$ = Animation.map(({delta}) => update(delta));
+  const keys = {
+    d$: Keys.isDown(68),
+    a$: Keys.isDown(65)
+  }
+
+  const update$ = Animation.withLatestFrom(keys.d$, keys.a$, ({delta}, dPressed, aPressed) => update(delta, dPressed, aPressed));
 
   const state$ = update$.startWith(initialState)
     .scan((state, action) => action(state));
