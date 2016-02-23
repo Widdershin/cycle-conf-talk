@@ -17,14 +17,16 @@ function makeKeysDriver () {
     }
   }
 
-  return () => ({
-    isDown: (key) => {
-      return Observable.merge(
-        keydown$.filter(isKey(key)).map(_ => true),
-        keyup$.filter(isKey(key)).map(_ => false)
-      ).startWith(false)
+  return function keysDriver () {
+    return {
+      isDown: (key) => {
+        return Observable.merge(
+          keydown$.filter(isKey(key)).map(_ => true),
+          keyup$.filter(isKey(key)).map(_ => false)
+        ).startWith(false)
+      }
     }
-  })
+  }
 }
 
 const drivers = {
