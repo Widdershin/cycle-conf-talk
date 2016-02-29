@@ -60,10 +60,11 @@ function defaultView(obj) {
   );
 }
 
-function view (state) {
+function view (state, width) {
+  const player = _.find(state.gameObjects, {name: 'mario'})
+
   return (
-    div([
-      pre(JSON.stringify(state, null, 2)),
+    div({key: 5434543, style: {transform: `translateX(-${player.x - width / 2}px)`}}, [
       state.gameObjects.map(obj => obj.view && obj.view(obj) || defaultView(obj))
     ])
   );
@@ -130,7 +131,7 @@ function update (delta, dPressed, aPressed, spacePressed) {
   };
 }
 
-export default function App ({DOM, Animation, Keys}) {
+export default function App ({DOM, Animation, Keys, Resize}) {
   const initialState = {
     gameObjects: [
       {
@@ -199,7 +200,11 @@ export default function App ({DOM, Animation, Keys}) {
   const state$ = update$.startWith(initialState)
     .scan((state, action) => action(state));
 
+  const viewportWidth$ = Resize
+    .pluck('width')
+    .startWith(window.innerWidth);
+
   return {
-    DOM: state$.map(view)
+    DOM: state$.withLatestFrom(viewportWidth$, view)
   };
 }

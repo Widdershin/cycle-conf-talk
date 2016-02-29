@@ -3,7 +3,7 @@ import {makeDOMDriver} from '@cycle/dom';
 import {makeAnimationDriver} from 'cycle-animation-driver';
 import {restart, restartable} from 'cycle-restart';
 import isolate from '@cycle/isolate';
-import {Observable} from 'rx';
+import {Observable, ReplaySubject} from 'rx';
 
 var app = require('./src/app').default;
 
@@ -29,10 +29,29 @@ function makeKeysDriver () {
   }
 }
 
+function makeResizeDriver () {
+  return function resizeDriver () {
+    const subject = new ReplaySubject(1);
+
+    window.addEventListener(
+      'resize',
+      () => subject.onNext(
+        {
+          width: window.innerWidth,
+          height: window.innerHeight
+        }
+      )
+    );
+
+    return subject;
+  }
+}
+
 const drivers = {
   DOM: restartable(makeDOMDriver('.app'), {pauseSinksWhileReplaying: false}),
   Animation: restartable(makeAnimationDriver()),
-  Keys : restartable(makeKeysDriver())
+  Keys : restartable(makeKeysDriver()),
+  Resize: restartable(makeResizeDriver())
 };
 
 const {sinks, sources} = run(app, drivers);

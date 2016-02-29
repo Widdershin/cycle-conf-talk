@@ -9,3 +9,8 @@ html, body {
 .mario {
   border: 1px solid #555;
 }
+
+html.noscroll {
+  position: fixed;
+  width: 100%;
+}
