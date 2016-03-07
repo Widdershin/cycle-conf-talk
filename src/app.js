@@ -3,6 +3,35 @@ import {Observable} from 'rx';
 import _ from 'lodash';
 import collide from 'box-collide';
 
+const text = [
+  {
+    text: 'Back to the Future',
+    x: 50,
+    y: 50,
+    title: true
+  },
+
+  {
+    text: 'Hot Reloading and Time Travel With Cycle.js',
+    x: 50,
+    y: 100
+  }
+];
+
+function renderText ({text, x, y, title}, key) {
+  const style = {
+    position: 'absolute',
+    left: x + 'px',
+    top: y + 'px'
+  };
+
+  const innerHTML = text.replace('\n', '<br>');
+
+  return (
+    div(`.text ${title ? '.title' : ''}`, {key, style, innerHTML})
+  );
+}
+
 function mario ({x, y, width, height}) {
   return (
     div('.mario', {
@@ -64,8 +93,9 @@ function view (state, width) {
   const player = _.find(state.gameObjects, {name: 'mario'})
 
   return (
-    div({key: 5434543, style: {transform: `translateX(-${player.x - width / 2}px)`}}, [
-      state.gameObjects.map(obj => obj.view && obj.view(obj) || defaultView(obj))
+    div('.slides', {key: 5434543, style: {transform: `translateX(-${player.x - width / 2}px)`}}, [
+      ...state.gameObjects.map(obj => obj.view && obj.view(obj) || defaultView(obj)),
+      div('.text', text.map(renderText))
     ])
   );
 }
@@ -137,7 +167,7 @@ export default function App ({DOM, Animation, Keys, Resize}) {
       {
         name: 'mario',
         x: 300,
-        y: 300,
+        y: 250,
         width: 20,
         height: 20,
         hAcceleration: 0.015,
@@ -150,7 +180,16 @@ export default function App ({DOM, Animation, Keys, Resize}) {
         name: 'ground',
         x: 0,
         y: 500,
-        width: 800,
+        width: 1900,
+        height: 60,
+        view: ground
+      },
+
+      {
+        name: 'ground',
+        x: 2100,
+        y: 500,
+        width: 1900,
         height: 60,
         view: ground
       },
