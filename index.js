@@ -4,6 +4,7 @@ import {makeAnimationDriver} from 'cycle-animation-driver';
 import {restart, restartable} from 'cycle-restart';
 import isolate from '@cycle/isolate';
 import {Observable, ReplaySubject} from 'rx';
+import keycode from 'keycode';
 
 var app = require('./src/app').default;
 
@@ -12,9 +13,13 @@ function makeKeysDriver () {
   const keyup$ = Observable.fromEvent(document, 'keyup');
 
   function isKey (key) {
+    if (typeof key !== 'number') {
+      key = keycode(key);
+    }
+
     return (event) => {
       return event.keyCode === key;
-    }
+    };
   }
 
   return function keysDriver () {
@@ -23,7 +28,7 @@ function makeKeysDriver () {
         return Observable.merge(
           keydown$.filter(isKey(key)).map(_ => true),
           keyup$.filter(isKey(key)).map(_ => false)
-        ).startWith(false)
+        ).startWith(false).distinctUntilChanged()
       }
     }
   }

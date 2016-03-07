@@ -178,21 +178,29 @@ export default function App ({DOM, Animation, Keys, Resize}) {
       {
         name: 'ground',
         x: 600,
-        y: 270,
-        width: 200,
+        y: 290,
+        width: 800,
         height: 30,
         view: ground
       },
 
+      {
+        name: 'ground',
+        x: -200,
+        y: 290,
+        width: 600,
+        height: 30,
+        view: ground
+      },
     ],
 
     gravity: 0.008
   };
 
   const keys = {
-    d$: Keys.isDown(68),
-    a$: Keys.isDown(65),
-    space$: Keys.isDown(32)
+    d$: Keys.isDown('D').startWith(false),
+    a$: Keys.isDown('A').startWith(false),
+    space$: Keys.isDown('Space').startWith(false)
   };
 
   const update$ = Animation.withLatestFrom(keys.d$, keys.a$, keys.space$, ({delta}, dPressed, aPressed, spacePressed) => update(delta, dPressed, aPressed, spacePressed));
