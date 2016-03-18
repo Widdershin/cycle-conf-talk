@@ -2,6 +2,7 @@ import {div, pre} from '@cycle/dom';
 import {Observable} from 'rx';
 import _ from 'lodash';
 import collide from 'box-collide';
+import moveToContact from './move-to-contact';
 
 const text = [
   {
@@ -116,12 +117,28 @@ function update (delta, dPressed, aPressed, spacePressed) {
 
     const otherGameObjects = state.gameObjects.slice(1);
 
-    mario.onGround = otherGameObjects.some(obj => collide(mario, obj));
+    const nextMarioPosition = Object.assign(
+      {},
+      mario,
+      {
+        x: mario.x + mario.hSpeed,
+        y: mario.y + mario.vSpeed
+      }
+    );
+
+    const collisions = otherGameObjects.filter(obj => collide(nextMarioPosition, obj));
+
+    const onGround = collisions.length > 0;
+
+    mario.onGround = onGround;
+
+    if (onGround) {
+      moveToContact(mario, collisions[0], delta);
+    }
 
     const platform = state.gameObjects.filter(obj => obj.name === 'platform')[0];
 
-    platform.y -= platform.hAccel * platform.direction * delta;
-
+    platform.y -= platform.hAccel * platform.direction * delta * 1.002;
 
     if (platform.y < 300) {
       platform.direction = -1;
