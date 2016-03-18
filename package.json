@@ -4,6 +4,8 @@
   "description": "My talk for CycleConf 2016",
   "main": "index.js",
   "dependencies": {
+    "@cycle/core": "^6.0.3",
+    "@cycle/dom": "^9.2.2",
     "@cycle/isolate": "^1.2.0",
     "box-collide": "^1.0.2",
     "cycle-animation-driver": "^0.1.2",
