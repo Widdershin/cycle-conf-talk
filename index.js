@@ -1,4 +1,4 @@
-import {run} from '@cycle/core';
+import {run} from 'cycle-time-travel';
 import {makeDOMDriver} from '@cycle/dom';
 import {makeAnimationDriver} from 'cycle-animation-driver';
 import {restart, restartable} from 'cycle-restart';
@@ -53,7 +53,7 @@ function makeResizeDriver () {
 }
 
 const drivers = {
-  DOM: restartable(makeDOMDriver('.app'), {pauseSinksWhileReplaying: false}),
+  DOM: restartable(makeDOMDriver('.app'), {pauseSinksWhileReplaying: false, replayOnlyLastSink: true}),
   Animation: restartable(makeAnimationDriver()),
   Keys : restartable(makeKeysDriver()),
   Resize: restartable(makeResizeDriver())
