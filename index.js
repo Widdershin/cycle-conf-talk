@@ -53,7 +53,7 @@ function makeResizeDriver () {
 }
 
 const drivers = {
-  DOM: restartable(makeDOMDriver('.app'), {pauseSinksWhileReplaying: false, replayOnlyLastSink: true}),
+  DOM: restartable(makeDOMDriver('.app'), {replayOnlyLastSink: true}),
   Animation: restartable(makeAnimationDriver()),
   Keys : restartable(makeKeysDriver()),
   Resize: restartable(makeResizeDriver())
@@ -65,6 +65,6 @@ if (module.hot) {
   module.hot.accept('./src/app', () => {
     app = require('./src/app').default;
 
-    restart(app, drivers, {sinks, sources}, isolate);
+    restart(app, drivers, {sinks, sources}, {isolate, run});
   });
 }
