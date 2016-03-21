@@ -148,6 +148,23 @@ function update (delta, dPressed, aPressed, spacePressed) {
       mario.hSpeed = 0;
     }
 
+    const marioCollidingLeftPosition = Object.assign(
+      {},
+      mario,
+      {
+        x: mario.x + mario.hSpeed - 1,
+        y: mario.y + mario.vSpeed
+      }
+    );
+
+    const collidingLeft = otherGameObjects
+      .filter(obj => collide(marioCollidingLeftPosition, obj))
+      .some(obj => obj.x + obj.width < mario.x);
+
+    if (collidingLeft) {
+      mario.hSpeed = 0;
+    }
+
     if (collisions.length >= 1) {
       moveToContact(mario, collisions[0], delta);
     }
@@ -168,7 +185,7 @@ function update (delta, dPressed, aPressed, spacePressed) {
       moveDirection += 1;
     }
 
-    if (aPressed) {
+    if (aPressed && !collidingLeft) {
       moveDirection -= 1;
     }
 
