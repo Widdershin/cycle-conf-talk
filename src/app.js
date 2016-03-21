@@ -103,16 +103,6 @@ function view (state, width) {
 
 function update (delta, dPressed, aPressed, spacePressed) {
   return (state) => {
-    let moveDirection = 0;
-
-    if (dPressed) {
-      moveDirection += 1;
-    }
-
-    if (aPressed) {
-      moveDirection -= 1;
-    }
-
     const mario = state.gameObjects[0];
 
     const otherGameObjects = state.gameObjects.slice(1);
@@ -128,24 +118,38 @@ function update (delta, dPressed, aPressed, spacePressed) {
 
     const collisions = otherGameObjects.filter(obj => collide(nextMarioPosition, obj));
 
-    const onGround = collisions.length > 0;
+    const marioOnGroundPosition = Object.assign(
+      {},
+      mario,
+      {
+        x: mario.x + mario.hSpeed,
+        y: mario.y + (mario.vSpeed + state.gravity * delta)
+      }
+    );
 
-    mario.onGround = onGround;
+    mario.onGround = otherGameObjects
+      .filter(obj => collide(marioOnGroundPosition, obj))
+      .some(obj => mario.y + mario.height < obj.y);
 
-    if (onGround) {
+    const marioCollidingRightPosition = Object.assign(
+      {},
+      mario,
+      {
+        x: mario.x + mario.hSpeed + 1,
+        y: mario.y + mario.vSpeed
+      }
+    );
+
+    const collidingRight = otherGameObjects
+      .filter(obj => collide(marioCollidingRightPosition, obj))
+      .some(obj => (mario.x + mario.width) < obj.x);
+
+    if (collidingRight) {
+      mario.hSpeed = 0;
+    }
+
+    if (collisions.length >= 1) {
       moveToContact(mario, collisions[0], delta);
-    }
-
-    const platform = state.gameObjects.filter(obj => obj.name === 'platform')[0];
-
-    platform.y -= platform.hAccel * platform.direction * delta * 1.002;
-
-    if (platform.y < 300) {
-      platform.direction = -1;
-    }
-
-    if (platform.y > 450) {
-      platform.direction = 1;
     }
 
     if (!mario.onGround) {
@@ -155,11 +159,17 @@ function update (delta, dPressed, aPressed, spacePressed) {
     }
 
     if (mario.onGround && spacePressed) {
-      mario.vSpeed -= 4;
+      mario.vSpeed -= mario.jumpHeight;
     }
 
-    if (collide(mario, platform)) {
-      mario.y = platform.y - mario.height
+    let moveDirection = 0;
+
+    if (dPressed && !collidingRight) {
+      moveDirection += 1;
+    }
+
+    if (aPressed) {
+      moveDirection -= 1;
     }
 
     mario.hSpeed += mario.hAcceleration * moveDirection * delta;
@@ -190,7 +200,8 @@ export default function App ({DOM, Animation, Keys, Resize}) {
         hAcceleration: 0.015,
         hSpeed: 0,
         vSpeed: 0,
-        view: mario
+        view: mario,
+        jumpHeight: 4
       },
 
       {
@@ -198,56 +209,18 @@ export default function App ({DOM, Animation, Keys, Resize}) {
         x: 0,
         y: 500,
         width: 1900,
-        height: 60,
+        height: 300,
         view: ground
       },
 
       {
         name: 'ground',
-        x: 2100,
-        y: 500,
-        width: 1900,
-        height: 60,
-        view: ground
-      },
-
-      {
-        name: 'ground',
-        x: 600,
-        y: 470,
-        width: 30,
-        height: 30,
-        view: ground
-      },
-
-      {
-        name: 'platform',
-        x: 500,
-        y: 450,
-        width: 50,
-        height: 20,
-        view: platform,
-        hAccel: 0.03,
-        direction: 1
-      },
-
-      {
-        name: 'ground',
-        x: 600,
-        y: 290,
+        x: 800,
+        y: 400,
         width: 800,
-        height: 30,
+        height: 500,
         view: ground
-      },
-
-      {
-        name: 'ground',
-        x: -200,
-        y: 290,
-        width: 600,
-        height: 30,
-        view: ground
-      },
+      }
     ],
 
     gravity: 0.008
