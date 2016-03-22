@@ -1,14 +1,16 @@
-import {div, pre} from '@cycle/dom';
+import {div, pre, button} from '@cycle/dom';
 import {Observable} from 'rx';
 import _ from 'lodash';
 import collide from 'box-collide';
 import moveToContact from './move-to-contact';
 
+import uuid from 'node-uuid';
+
 const text = [
   {
     text: 'Back to the Future',
     x: 50,
-    y: 50,
+    y: 20,
     title: true
   },
 
@@ -22,8 +24,7 @@ const text = [
 function renderText ({text, x, y, title}, key) {
   const style = {
     position: 'absolute',
-    left: x + 'px',
-    top: y + 'px'
+    transform: `translate(${x}px, ${y}px)`
   };
 
   const innerHTML = text.replace('\n', '<br>');
@@ -33,24 +34,25 @@ function renderText ({text, x, y, title}, key) {
   );
 }
 
-function mario ({x, y, width, height}) {
+function mario ({id, x, y, width, height}) {
   return (
     div('.mario', {
       style: {
+        key: id,
         width: width + 'px',
         height: height + 'px',
         background: 'orange',
         position: 'absolute',
-        left: x + 'px',
-        top: y + 'px'
+        transform: `translate(${x}px, ${y}px)`
       }
     })
   );
 }
 
-function ground ({x, y, width, height}) {
+function ground ({id, x, y, width, height}) {
   return (
     div('.ground', {
+      key: id,
       style: {
         width: width + 'px',
         height: height + 'px',
@@ -95,8 +97,8 @@ function view (state, width) {
 
   return (
     div('.slides', {key: 5434543, style: {transform: `translateX(-${player.x - width / 2}px)`}}, [
-      ...state.gameObjects.map(obj => obj.view && obj.view(obj) || defaultView(obj)),
-      div('.text', text.map(renderText))
+      div('.text', text.map(renderText)),
+      ...state.gameObjects.map(obj => obj.view && obj.view(obj) || defaultView(obj))
     ])
   );
 }
@@ -205,10 +207,29 @@ function update (delta, dPressed, aPressed, spacePressed) {
   };
 }
 
+function incrementCounter (state) {
+  const counter = state.gameObjects.find(obj => obj.name === 'counter');
+
+  counter.count++;
+  counter.clicks.push('x');
+
+  return state;
+}
+
+function resetCounter (state) {
+  const counter = state.gameObjects.find(obj => obj.name === 'counter');
+
+  counter.count = 0;
+  counter.clicks = [];
+
+  return state;
+}
+
 export default function App ({DOM, Animation, Keys, Resize}) {
   const initialState = {
     gameObjects: [
       {
+        id: uuid.v4(),
         name: 'mario',
         x: 300,
         y: 250,
@@ -218,25 +239,60 @@ export default function App ({DOM, Animation, Keys, Resize}) {
         hSpeed: 0,
         vSpeed: 0,
         view: mario,
-        jumpHeight: 4
+        jumpHeight: 7
       },
 
       {
+        id: uuid.v4(),
         name: 'ground',
         x: 0,
         y: 500,
-        width: 1900,
+        width: 4300,
         height: 300,
         view: ground
       },
 
       {
+        id: uuid.v4(),
         name: 'ground',
         x: 800,
         y: 400,
         width: 800,
-        height: 500,
+        height: 100,
         view: ground
+      },
+
+      {
+        id: uuid.v4(),
+        name: 'counter',
+        x: 1900,
+        y: 0,
+        count: 0,
+        clicks: [],
+        view (counter) {
+          const style = {
+            position: 'absolute',
+            transform: `translate(${counter.x}px, ${counter.y}px)`,
+            background: '#EEE',
+            'display': 'flex',
+            'flex-direction': 'column',
+            'align-items': 'center',
+            width: '500px',
+            padding: '5px'
+          };
+
+          return (
+            div('.counter', {key: counter.id, style}, [
+              div('.explanation', {innerHTML: `f({<br>  add$: [${counter.clicks.join(', ')}]<br>})`}),
+              div('', `=>`),
+              div('.count', `Count: ${counter.count}`),
+              div('.buttons', [
+                button('.add', `Add`),
+                button('.reset', `Reset`)
+              ])
+            ])
+          );
+        }
       }
     ],
 
@@ -251,7 +307,23 @@ export default function App ({DOM, Animation, Keys, Resize}) {
 
   const update$ = Animation.withLatestFrom(keys.d$, keys.a$, keys.space$, ({delta}, dPressed, aPressed, spacePressed) => update(delta, dPressed, aPressed, spacePressed));
 
-  const state$ = update$.startWith(initialState)
+  const add$ = DOM
+    .select('.add')
+    .events('click')
+    .map(() => incrementCounter);
+
+  const reset$ = DOM
+    .select('.reset')
+    .events('click')
+    .map(() => resetCounter);
+
+  const action$ = Observable.merge(
+    update$,
+    add$,
+    reset$
+  );
+
+  const state$ = action$.startWith(initialState)
     .scan((state, action) => action(state));
 
   const viewportWidth$ = Resize

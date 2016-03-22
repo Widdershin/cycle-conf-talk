@@ -1,4 +1,4 @@
-import {run} from 'cycle-time-travel';
+import {run} from '@cycle/core';
 import {makeDOMDriver} from '@cycle/dom';
 import {makeAnimationDriver} from 'cycle-animation-driver';
 import {restart, restartable} from 'cycle-restart';
@@ -28,10 +28,10 @@ function makeKeysDriver () {
         return Observable.merge(
           keydown$.filter(isKey(key)).map(_ => true),
           keyup$.filter(isKey(key)).map(_ => false)
-        ).startWith(false).distinctUntilChanged()
+        ).startWith(false).distinctUntilChanged();
       }
-    }
-  }
+    };
+  };
 }
 
 function makeResizeDriver () {
@@ -49,7 +49,7 @@ function makeResizeDriver () {
     );
 
     return subject;
-  }
+  };
 }
 
 const drivers = {
