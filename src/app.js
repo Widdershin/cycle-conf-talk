@@ -6,21 +6,6 @@ import moveToContact from './move-to-contact';
 
 import uuid from 'node-uuid';
 
-const text = [
-  {
-    text: 'Back to the Future',
-    x: 50,
-    y: 20,
-    title: true
-  },
-
-  {
-    text: 'Hot Reloading and Time Travel With Cycle.js',
-    x: 50,
-    y: 100
-  }
-];
-
 function renderText ({text, x, y, title}, key) {
   const style = {
     position: 'absolute',
@@ -93,21 +78,38 @@ function defaultView(obj) {
 }
 
 function view (state, width) {
-  const player = _.find(state.gameObjects, {name: 'mario'})
+  const player = _.find(state.gameObjects, {name: 'mario'});
 
   return (
-    div('.slides', {key: 5434543, style: {transform: `translateX(-${player.x - width / 2}px)`}}, [
-      div('.text', text.map(renderText)),
-      ...state.gameObjects.map(obj => obj.view && obj.view(obj) || defaultView(obj))
+    div('.slides', {key: 5434543}, [
+      div('.text', (state.slides[state.slide].text || []).map(renderText)),
+      state.mario.view(state.mario),
+      ...state.slides[state.slide].gameObjects.map(obj => obj.view && obj.view(obj) || defaultView(obj))
     ])
   );
 }
 
-function update (delta, dPressed, aPressed, spacePressed) {
-  return (state) => {
-    const mario = state.gameObjects[0];
+function currentSlide (state) {
+  return state.slides[state.slide];
+}
 
-    const otherGameObjects = state.gameObjects.slice(1);
+function update (delta, dPressed, aPressed, spacePressed, viewportWidth) {
+  return (state) => {
+    const gameObjects = currentSlide(state).gameObjects;
+
+    const mario = state.mario;
+
+    if (mario.x > viewportWidth) {
+      state.slide++;
+
+      mario.x = 0;
+    }
+
+    if (mario.x < 0) {
+      state.slide--;
+
+      mario.x = viewportWidth
+    }
 
     const nextMarioPosition = Object.assign(
       {},
@@ -118,7 +120,7 @@ function update (delta, dPressed, aPressed, spacePressed) {
       }
     );
 
-    const collisions = otherGameObjects.filter(obj => collide(nextMarioPosition, obj));
+    const collisions = gameObjects.filter(obj => collide(nextMarioPosition, obj));
 
     const marioOnGroundPosition = Object.assign(
       {},
@@ -129,7 +131,7 @@ function update (delta, dPressed, aPressed, spacePressed) {
       }
     );
 
-    mario.onGround = otherGameObjects
+    mario.onGround = gameObjects
       .filter(obj => collide(marioOnGroundPosition, obj))
       .some(obj => mario.y + mario.height < obj.y);
 
@@ -142,7 +144,7 @@ function update (delta, dPressed, aPressed, spacePressed) {
       }
     );
 
-    const collidingRight = otherGameObjects
+    const collidingRight = gameObjects
       .filter(obj => collide(marioCollidingRightPosition, obj))
       .some(obj => (mario.x + mario.width) < obj.x);
 
@@ -159,7 +161,7 @@ function update (delta, dPressed, aPressed, spacePressed) {
       }
     );
 
-    const collidingLeft = otherGameObjects
+    const collidingLeft = gameObjects
       .filter(obj => collide(marioCollidingLeftPosition, obj))
       .some(obj => obj.x + obj.width < mario.x);
 
@@ -208,7 +210,7 @@ function update (delta, dPressed, aPressed, spacePressed) {
 }
 
 function incrementCounter (state) {
-  const counter = state.gameObjects.find(obj => obj.name === 'counter');
+  const counter = currentSlide(state).gameObjects.find(obj => obj.name === 'counter');
 
   counter.count++;
   counter.clicks.push('x');
@@ -217,7 +219,7 @@ function incrementCounter (state) {
 }
 
 function resetCounter (state) {
-  const counter = state.gameObjects.find(obj => obj.name === 'counter');
+  const counter = currentSlide(state).gameObjects.find(obj => obj.name === 'counter');
 
   counter.count = 0;
   counter.clicks = [];
@@ -227,72 +229,106 @@ function resetCounter (state) {
 
 export default function App ({DOM, Animation, Keys, Resize}) {
   const initialState = {
-    gameObjects: [
+    mario: {
+      id: uuid.v4(),
+      name: 'mario',
+      x: 300,
+      y: 250,
+      width: 20,
+      height: 20,
+      hAcceleration: 0.015,
+      hSpeed: 0,
+      vSpeed: 0,
+      view: mario,
+      jumpHeight: 7
+    },
+
+    slide: 0,
+
+    slides: [
       {
-        id: uuid.v4(),
-        name: 'mario',
-        x: 300,
-        y: 250,
-        width: 20,
-        height: 20,
-        hAcceleration: 0.015,
-        hSpeed: 0,
-        vSpeed: 0,
-        view: mario,
-        jumpHeight: 7
+        text: [
+          {
+            text: 'Back to the Future',
+            x: 50,
+            y: 20,
+            title: true
+          },
+
+          {
+            text: 'Hot Reloading and Time Travel With Cycle.js',
+            x: 50,
+            y: 100
+          }
+        ],
+
+        gameObjects: [
+          {
+            id: uuid.v4(),
+            name: 'ground',
+            x: 0,
+            y: 500,
+            width: 1500,
+            height: 300,
+            view: ground
+          },
+
+          {
+            id: uuid.v4(),
+            name: 'ground',
+            x: 0,
+            y: 200,
+            width: 50,
+            height: 300,
+            view: ground
+          }
+        ]
       },
 
       {
-        id: uuid.v4(),
-        name: 'ground',
-        x: 0,
-        y: 500,
-        width: 4300,
-        height: 300,
-        view: ground
-      },
+        gameObjects: [
+          {
+            id: uuid.v4(),
+            name: 'ground',
+            x: 0,
+            y: 500,
+            width: 1500,
+            height: 300,
+            view: ground
+          },
+          {
+            id: uuid.v4(),
+            name: 'counter',
+            x: 200,
+            y: 0,
+            count: 0,
+            clicks: [],
+            view (counter) {
+              const style = {
+                position: 'absolute',
+                transform: `translate(${counter.x}px, ${counter.y}px)`,
+                background: '#EEE',
+                'display': 'flex',
+                'flex-direction': 'column',
+                'align-items': 'center',
+                width: '500px',
+                padding: '5px'
+              };
 
-      {
-        id: uuid.v4(),
-        name: 'ground',
-        x: 800,
-        y: 400,
-        width: 800,
-        height: 100,
-        view: ground
-      },
-
-      {
-        id: uuid.v4(),
-        name: 'counter',
-        x: 1900,
-        y: 0,
-        count: 0,
-        clicks: [],
-        view (counter) {
-          const style = {
-            position: 'absolute',
-            transform: `translate(${counter.x}px, ${counter.y}px)`,
-            background: '#EEE',
-            'display': 'flex',
-            'flex-direction': 'column',
-            'align-items': 'center',
-            width: '500px',
-            padding: '5px'
-          };
-
-          return (
-            div('.counter', {key: counter.id, style}, [
-              div('.explanation', {innerHTML: `f({<br>  add$: [${counter.clicks.join(', ')}]<br>})`}),
-              div('', `=>`),
-              div('.count', `Count: ${counter.count}`),
-              div('.buttons', [
-                button('.add', `Add`),
-                button('.reset', `Reset`)
-              ])
-            ])
-          );
-        }
+              return (
+                div('.counter', {key: counter.id, style}, [
+                  div('.explanation', {innerHTML: `f({<br>  add$: [${counter.clicks.join(', ')}]<br>})`}),
+                  div('', `=>`),
+                  div('.count', `Count: ${counter.count}`),
+                  div('.buttons', [
+                    button('.add', `Add`),
+                    button('.reset', `Reset`)
+                  ])
+                ])
+              );
+            }
+          }
+        ]
       }
     ],
 
@@ -305,7 +341,11 @@ export default function App ({DOM, Animation, Keys, Resize}) {
     space$: Keys.isDown('Space').startWith(false)
   };
 
-  const update$ = Animation.withLatestFrom(keys.d$, keys.a$, keys.space$, ({delta}, dPressed, aPressed, spacePressed) => update(delta, dPressed, aPressed, spacePressed));
+  const viewportWidth$ = Resize
+    .pluck('width')
+    .startWith(window.innerWidth);
+
+  const update$ = Animation.withLatestFrom(keys.d$, keys.a$, keys.space$, viewportWidth$, ({delta}, dPressed, aPressed, spacePressed, viewportWidth) => update(delta, dPressed, aPressed, spacePressed, viewportWidth));
 
   const add$ = DOM
     .select('.add')
@@ -325,10 +365,6 @@ export default function App ({DOM, Animation, Keys, Resize}) {
 
   const state$ = action$.startWith(initialState)
     .scan((state, action) => action(state));
-
-  const viewportWidth$ = Resize
-    .pluck('width')
-    .startWith(window.innerWidth);
 
   return {
     DOM: state$.withLatestFrom(viewportWidth$, view)
