@@ -13,6 +13,7 @@
     "keycode": "^2.1.1",
     "lodash": "^4.1.0",
     "node-uuid": "^1.4.7",
+    "require-all": "^2.0.0",
     "rx": "^4.0.7",
     "tricycle": "git://github.com/widdershin/tricycle"
   },

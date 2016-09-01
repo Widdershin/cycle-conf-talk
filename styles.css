@@ -73,6 +73,6 @@ button {
 }
 
 .counter .explanation {
-  font-size: 0.5em;
-
+  align-self: flex-start;
+  margin: 10px;
 }

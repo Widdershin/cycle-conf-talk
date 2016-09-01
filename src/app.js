@@ -6,6 +6,8 @@ import moveToContact from './move-to-contact';
 
 import uuid from 'node-uuid';
 
+import slides from './slides';
+
 function renderText ({text, x, y, title}, key) {
   const style = {
     position: 'absolute',
@@ -29,22 +31,6 @@ function mario ({id, x, y, width, height}) {
         background: 'orange',
         position: 'absolute',
         transform: `translate(${x}px, ${y}px)`
-      }
-    })
-  );
-}
-
-function ground ({id, x, y, width, height}) {
-  return (
-    div('.ground', {
-      key: id,
-      style: {
-        width: width + 'px',
-        height: height + 'px',
-        background: 'brown',
-        position: 'absolute',
-        left: x + 'px',
-        top: y + 'px'
       }
     })
   );
@@ -77,14 +63,14 @@ function defaultView(obj) {
   );
 }
 
-function view (state, width) {
+function view (state, width, slide) {
   const player = _.find(state.gameObjects, {name: 'mario'});
 
   return (
     div('.slides', {key: 5434543}, [
-      div('.text', (state.slides[state.slide].text || []).map(renderText)),
+      div('.text', (slide.text || []).map(renderText)),
       state.mario.view(state.mario),
-      ...state.slides[state.slide].gameObjects.map(obj => obj.view && obj.view(obj) || defaultView(obj))
+      ...slide.gameObjects.map(obj => obj.view && obj.view(obj) || defaultView(obj))
     ])
   );
 }
@@ -228,6 +214,16 @@ function resetCounter (state) {
 }
 
 export default function App ({DOM, Animation, Keys, Resize}) {
+  function setupSlideIfNeeded (state) {
+    const slide = currentSlide(state);
+
+    if (slide.setupCalled === false) {
+      slide.setup({DOM});
+    }
+
+    return state;
+  }
+
   const initialState = {
     mario: {
       id: uuid.v4(),
@@ -245,92 +241,7 @@ export default function App ({DOM, Animation, Keys, Resize}) {
 
     slide: 0,
 
-    slides: [
-      {
-        text: [
-          {
-            text: 'Back to the Future',
-            x: 50,
-            y: 20,
-            title: true
-          },
-
-          {
-            text: 'Hot Reloading and Time Travel With Cycle.js',
-            x: 50,
-            y: 100
-          }
-        ],
-
-        gameObjects: [
-          {
-            id: uuid.v4(),
-            name: 'ground',
-            x: 0,
-            y: 500,
-            width: 1500,
-            height: 300,
-            view: ground
-          },
-
-          {
-            id: uuid.v4(),
-            name: 'ground',
-            x: 0,
-            y: 200,
-            width: 50,
-            height: 300,
-            view: ground
-          }
-        ]
-      },
-
-      {
-        gameObjects: [
-          {
-            id: uuid.v4(),
-            name: 'ground',
-            x: 0,
-            y: 500,
-            width: 1500,
-            height: 300,
-            view: ground
-          },
-          {
-            id: uuid.v4(),
-            name: 'counter',
-            x: 200,
-            y: 0,
-            count: 0,
-            clicks: [],
-            view (counter) {
-              const style = {
-                position: 'absolute',
-                transform: `translate(${counter.x}px, ${counter.y}px)`,
-                background: '#EEE',
-                'display': 'flex',
-                'flex-direction': 'column',
-                'align-items': 'center',
-                width: '500px',
-                padding: '5px'
-              };
-
-              return (
-                div('.counter', {key: counter.id, style}, [
-                  div('.explanation', {innerHTML: `f({<br>  add$: [${counter.clicks.join(', ')}]<br>})`}),
-                  div('', `=>`),
-                  div('.count', `Count: ${counter.count}`),
-                  div('.buttons', [
-                    button('.add', `Add`),
-                    button('.reset', `Reset`)
-                  ])
-                ])
-              );
-            }
-          }
-        ]
-      }
-    ],
+    slides,
 
     gravity: 0.008
   };
@@ -366,7 +277,11 @@ export default function App ({DOM, Animation, Keys, Resize}) {
   const state$ = action$.startWith(initialState)
     .scan((state, action) => action(state));
 
+  const slide$ = state$
+    .distinctUntilChanged(state => state.slide)
+    .map(state => currentSlide(state)({DOM}));
+
   return {
-    DOM: state$.withLatestFrom(viewportWidth$, view)
+    DOM: state$.withLatestFrom(viewportWidth$, slide$, view)
   };
 }
